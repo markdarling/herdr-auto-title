@@ -146,12 +146,12 @@ The transcript is then read from disk (`internal/claude/transcript.go`). Claude
 Code files its sessions under the configuration home `CLAUDE_CONFIG_DIR` names,
 and a user may have more than one — a second home for work under one client,
 say, whose sessions are invisible to a plugin reading only the first.
-`HERDR_AUTO_TITLE_CLAUDE_DIRS` names the others, and `locate` tries each home in
-order, `locateUnder` doing one home's own two-step lookup, so a session found in
-the first costs what it cost before the setting existed. The homes are named
-rather than discovered: a scan for anything shaped like a configuration home
-would read directories the user never pointed the plugin at, which is the one
-thing this source does not do. Both settings are read in
+`HERDR_AUTO_TITLE_CLAUDE_DIRS` names the others, and `transcript.Layout.Find`
+tries each home in order, with its own two-step lookup inside each, so a session
+found in the first costs what it cost before the setting existed. The homes are
+named rather than discovered: a scan for anything shaped like a configuration
+home would read directories the user never pointed the plugin at, which is the
+one thing this source does not do. Both settings are read in
 `internal/app/config.go` with every other one and reach the reader as
 `Config.ClaudeDirs`, already in search order, so `internal/claude` reads no
 environment at all: a reader is built over the homes it is handed, and no home
