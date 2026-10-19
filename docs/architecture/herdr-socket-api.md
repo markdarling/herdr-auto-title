@@ -356,6 +356,13 @@ reads, so this section describes Herdr rather than those types.
   Pi. The same pane carried `title: null`, `display_agent: null` and, in
   `terminal_title_stripped`, Pi's own title unchanged: `π - <dir>` for an
   unnamed session, `π - <name> - <dir>` once `/name` has named it.
+- **Codex's `agent_session` is an id.** The hook Herdr 0.9.5 installs for it
+  (integration version 10) runs on `SessionStart` and reports `agent: "codex"`
+  with the session id alone, dropping the `transcript_path` Codex hands it, so
+  the rollout is found by id under `CODEX_HOME`. Read from the hook, not yet
+  measured on a live Codex pane. Without the integration a Codex pane still
+  reports `agent: "codex"` and `agent_session: null`, measured on Herdr 0.9.5
+  with Codex 0.163.0.
 - **`pane.report_metadata` is how anything outside Herdr sets `PaneInfo.title`.**
   Probed directly: `herdr pane report-metadata <pane> --source X --title T` put
   `T` in the snapshot's `title` and a tab bearing it appeared within one poll;

@@ -395,6 +395,22 @@ func TestASessionFiledUnderAnotherDirectoryIsStillFound(t *testing.T) {
 	}
 }
 
+func TestASessionFiledUnderTwoOtherDirectoriesIsReadFromTheFirst(t *testing.T) {
+	t.Parallel()
+
+	// Projects sort by slug, not by age, so the first is as good as any and
+	// is what was always read.
+	p := newProject(t)
+	p.dir = "/work/a"
+	p.write(aiTitle("First project"))
+	p.dir = "/work/b"
+	p.write(aiTitle("Second project"))
+
+	if got := p.reader().Topic(session, "/somewhere/else"); got.Text() != "First project" {
+		t.Errorf("topic = %+v, want the transcript sorted first", got)
+	}
+}
+
 func TestASessionWithNoTranscriptSaysNothing(t *testing.T) {
 	t.Parallel()
 

@@ -142,6 +142,28 @@ session id through `pane.report_agent_session`, and it arrives in the snapshot
 as `PaneInfo.agent_session` — no extra request. Without the hook the field is
 null, this source declines, and every other rung works as it always did.
 
+`herdr integration install codex` reports a Codex session id the same way, and
+`internal/codex/session.go` reads two files under `CODEX_HOME`, else `~/.codex`.
+Codex files the rollout under the day the session started, as
+`sessions/YYYY/MM/DD/rollout-<timestamp>-<id>.jsonl`, so its `transcript.Layout`
+has no directory to try first; a reverted session goes on in a new file whose
+name adds a rollout id after the session's, and the layout's `Pick` takes the
+newest match, where Claude's takes the first.
+Two things can name a session:
+
+- the session index, `session_index.jsonl`, one line per name with the last for
+  an id winning. Codex writes the title it generates from the first prompt
+  there, and `/rename` too; one file holds every session's names.
+- failing that, the first `user_message` event in the rollout, which is what
+  Codex's resume picker shows for an unnamed session. Only its first line is
+  kept; what Codex injects arrives as `response_item` lines and is not read.
+
+The rollout's `session_meta` line says where the session started and each
+`turn_context` line where it went on, and the last of them is where its branch
+is read from. Both files are followed through `transcript.Follower`, the
+rollout's head included. Codex compresses a rollout to `.jsonl.zst` only once
+it is a week old, which is not a session a pane still holds.
+
 The transcript is then read from disk (`internal/claude/transcript.go`). Claude
 Code files its sessions under the configuration home `CLAUDE_CONFIG_DIR` names,
 and a user may have more than one — a second home for work under one client,
