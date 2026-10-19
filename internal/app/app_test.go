@@ -1727,7 +1727,8 @@ func TestATabIsNamedFromAPiSessionsFirstPrompt(t *testing.T) {
 func TestATabIsNamedFromACodexSessionsName(t *testing.T) {
 	t.Parallel()
 
-	// The files Codex keeps for a session say what the tab is for.
+	// Codex titles its terminal after its project until the session has a
+	// name, so the files Codex keeps for the session say what the tab is for.
 	const session = "01a070db-95a3-70b3-bd9d-a9ee3186a65b"
 
 	cfg := transcriptConfig()
@@ -1742,8 +1743,9 @@ func TestATabIsNamedFromACodexSessionsName(t *testing.T) {
 		[]herdr.TabInfo{{TabID: "wE:t1", Label: "1"}},
 		[]herdr.PaneInfo{{
 			PaneID: "wE:p1", TabID: "wE:t1", CWD: dashboard, Focused: true,
-			Agent:       "codex",
-			AgentStatus: "working",
+			TerminalTitleStripped: "dashboard",
+			Agent:                 "codex",
+			AgentStatus:           "working",
 			AgentSession: &herdr.AgentSessionInfo{
 				Agent: "codex", Kind: herdr.SessionRefID, Value: session,
 			},
