@@ -10,13 +10,14 @@ import (
 	"github.com/kryptamine/herdr-auto-title/internal/state"
 )
 
-// codexPaneAt is a pane sitting in dir and holding a Codex session, which
-// Herdr reports by id alone.
-func codexPaneAt(paneID, sessionID, dir string) *state.PaneState {
+// codexPaneAt is a pane sitting in dir, titled title and holding testSession,
+// which Herdr reports by id alone.
+func codexPaneAt(dir, title string) *state.PaneState {
 	return state.PaneFrom(herdr.PaneInfo{
-		PaneID: paneID, TabID: "wE:t1", CWD: dir, Agent: "codex",
+		PaneID: "wE:p1", TabID: "wE:t1", CWD: dir, Agent: "codex",
+		TerminalTitleStripped: title,
 		AgentSession: &herdr.AgentSessionInfo{
-			Agent: "codex", Kind: herdr.SessionRefID, Value: sessionID,
+			Agent: "codex", Kind: herdr.SessionRefID, Value: testSession,
 		},
 	}, "", time.Time{})
 }
@@ -41,7 +42,7 @@ func TestACodexPaneIsNamedFromItsSession(t *testing.T) {
 	)
 	readstest.CodexName(t, opts.CodexHome, testSession, "Rework poll loop")
 
-	pane := codexPaneAt("wE:p1", testSession, repo)
+	pane := codexPaneAt(repo, "")
 	readOne(opts, pane)
 
 	if pane.AgentTopic != "Rework poll loop" {
@@ -50,6 +51,26 @@ func TestACodexPaneIsNamedFromItsSession(t *testing.T) {
 
 	if pane.AgentDir != repo {
 		t.Errorf("agent dir = %q, want where the session started, %q", pane.AgentDir, repo)
+	}
+}
+
+func TestACodexSessionTheTitleLeftBehindIsNotRead(t *testing.T) {
+	t.Parallel()
+
+	// After /new Herdr reports the old session until the next prompt, so its
+	// name would stay on the tab of a session that has none yet.
+	opts := codexOptions(t)
+	readstest.CodexRollout(t, opts.CodexHome, testSession,
+		readstest.CodexStartedIn(t.TempDir()),
+		readstest.CodexPrompt("reply with ok"),
+	)
+	readstest.CodexName(t, opts.CodexHome, testSession, "Reply with ok")
+
+	pane := codexPaneAt(t.TempDir(), "dashboard")
+	readOne(opts, pane)
+
+	if pane.AgentTopic != "" || pane.AgentDir != "" {
+		t.Errorf("topic = %q, dir = %q, want neither read", pane.AgentTopic, pane.AgentDir)
 	}
 }
 
@@ -63,7 +84,7 @@ func TestACodexSessionInAWorktreeNamesItsBranch(t *testing.T) {
 	opts := codexOptions(t)
 	readstest.CodexRollout(t, opts.CodexHome, testSession, readstest.CodexStartedIn(worktree))
 
-	pane := codexPaneAt("wE:p1", testSession, repo)
+	pane := codexPaneAt(repo, "")
 	readOne(opts, pane)
 
 	if got := branchFor(pane); got != "feat/oauth" {
@@ -81,7 +102,7 @@ func TestTranscriptsSwitchedOffLeaveACodexSessionUnread(t *testing.T) {
 		readstest.CodexPrompt("rework the poll loop"),
 	)
 
-	pane := codexPaneAt("wE:p1", testSession, t.TempDir())
+	pane := codexPaneAt(t.TempDir(), "")
 	readOne(opts, pane)
 
 	if pane.AgentTopic != "" || pane.AgentDir != "" {

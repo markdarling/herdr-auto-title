@@ -231,6 +231,9 @@ func (r *Reader) topic(ctx context.Context, pane *state.PaneState, dir string) s
 		}
 
 		topic := r.codexTopics.Topic(sessionID)
+		if !r.codexTopics.Shows(pane.TerminalTitle, topic) {
+			return sessionTopic{}
+		}
 
 		return sessionTopic{text: topic.Text(), dir: topic.Dir}
 	}

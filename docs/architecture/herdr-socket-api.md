@@ -359,8 +359,12 @@ reads, so this section describes Herdr rather than those types.
 - **Codex's `agent_session` is an id.** The hook Herdr 0.9.5 installs for it
   (integration version 10) runs on `SessionStart` and reports `agent: "codex"`
   with the session id alone, dropping the `transcript_path` Codex hands it, so
-  the rollout is found by id under `CODEX_HOME`. Read from the hook, not yet
-  measured on a live Codex pane. Without the integration a Codex pane still
+  the rollout is found by id under `CODEX_HOME`; a live pane carries
+  `source: "herdr:codex"`, `kind: "id"`. The hook fires at a session's first
+  prompt, not when it opens, while the rollout is written at once: after `/new`
+  or `/resume` the pane goes on reporting the session before, with the terminal
+  title already the next one's, until the user sends a prompt. Without the
+  integration a Codex pane still
   reports `agent: "codex"` and `agent_session: null`. Its
   `terminal_title_stripped` loses a leading braille spinner (`⠋ x | y` →
   `x | y`) but keeps a `●` or a `[ ! ] Action Required` in front of it.

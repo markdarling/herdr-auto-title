@@ -126,14 +126,21 @@ so it reads `<project>` until the session has a name and `<name> | <project>`
 once Codex has generated one or `/rename` has set it; while it waits on the user
 it blinks `[ ! ] Action Required` and `[ . ] Action Required` in front. Herdr
 strips the braille spinner but not that prefix, nor the `●` voice mode puts
-before it. `withoutCodexFrame` (`internal/resolver/codex.go`) drops all three
+before it. `codex.ThreadName` (`internal/codex/title.go`) drops all three
 and the last ` | ` item, which is always the project: Codex names it after the
 repository root and cuts it at 24 characters, so it is not matched against the
 pane's directory. A title with no ` | ` left is the project alone and declines.
 A session the transcript has read declines the title outright: the title cuts
-the name at 48 characters, and the session index holds it whole. A user who
-reconfigured `tui.terminal_title` breaks this reading, and the session files
-still name the tab.
+the name at 48 characters, and the session index holds it whole. That makes
+the title the judge of whether the session is still the pane's: Herdr learns of
+a Codex session only at its first prompt, so after `/new` or `/resume` it goes
+on reporting the one before while the title already shows the next. A session
+whose name the title does not start with, or that has a name the title lacks,
+is not read, and the pane is titled as if no session had been reported. A user
+who reconfigured `tui.terminal_title` breaks this reading, so a `config.toml`
+under the Codex home that assigns the key turns the check off, and the session
+files still name the tab. The file is scanned for the key rather than parsed: a
+false match only skips the check, and a miss would drop every session's name.
 
 Pi is read with one more step, because its title has a grammar of its own: Pi
 titles its terminal `π - <dir>` and, once `/name` has given the session a name,

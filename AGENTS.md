@@ -224,7 +224,8 @@ are only the facts that would otherwise mislead the code in silence.
   as `id` even when its hook reported the path too; Pi's arrives as `path`, the
   absolute path of its session file. A reader keyed on one kind reads nothing
   for the other. Codex's hook reports only the id, though Codex hands it the
-  path.
+  path, and only at a session's first prompt: after `/new` or `/resume` the
+  reported session lags the terminal title until the user types.
 - **A plugin the server starts inherits the server's environment**, not the
   shell of whoever installed it, which is why `HERDR_AUTO_TITLE_*` settings
   arrive through `config.env` (see

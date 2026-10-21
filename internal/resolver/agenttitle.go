@@ -20,7 +20,7 @@ func agentTitle(pane *state.PaneState, title string) (string, bool) {
 			return "", false
 		}
 
-		return withoutCodexFrame(title)
+		return codex.ThreadName(title)
 	}
 
 	return title, true
