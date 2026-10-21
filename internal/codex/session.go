@@ -17,31 +17,6 @@ import (
 // package knows how to read.
 const Agent = "codex"
 
-// maxOpening bounds what an opening prompt contributes. It is generous because
-// the cut that matters is made later, against the width of the tab bar.
-const maxOpening = 200
-
-// Topic is what a session says it is about.
-type Topic struct {
-	// Name is what the session is called: the title Codex generated from the
-	// first prompt, or the one the user gave it with /rename.
-	Name string
-	// Opening is the first prompt the user typed, which is what Codex's own
-	// resume picker shows for a session that has no name.
-	Opening string
-	// Dir is where the agent was last working, which its rollout records.
-	Dir string
-}
-
-// Text is what the topic contributes to a title, the name first.
-func (t Topic) Text() string {
-	if t.Name != "" {
-		return t.Name
-	}
-
-	return t.Opening
-}
-
 // Reader reads Codex's session files, remembering how far it has read each
 // one. Both kinds only grow, so a poll reads the bytes appended since the last.
 type Reader struct {
@@ -56,7 +31,7 @@ type Reader struct {
 type rollout struct {
 	search   transcript.Search
 	follower transcript.Follower
-	topic    Topic
+	topic    transcript.Topic
 }
 
 // NewReader builds a reader over home, the directory Codex keeps its sessions
@@ -78,9 +53,9 @@ func NewReader(home string) *Reader {
 // Topic reports what the session is about, or the zero topic when nothing can
 // be read. The id becomes part of a path, so it must be one
 // herdr.AgentSessionInfo.ID accepted.
-func (r *Reader) Topic(sessionID string) Topic {
+func (r *Reader) Topic(sessionID string) transcript.Topic {
 	if len(r.roots) == 0 {
-		return Topic{}
+		return transcript.Topic{}
 	}
 
 	r.mu.Lock()
@@ -98,7 +73,11 @@ func (r *Reader) Topic(sessionID string) Topic {
 	// A rollout that went missing is looked for again, and what was read of
 	// it still names the session better than nothing does until it is found.
 	if layout.Find(&held.search, r.roots, sessionID, "", r.now()) &&
-		!held.follower.Follow(held.search.Path, func() { held.topic = Topic{} }, held.absorb) {
+		!held.follower.Follow(
+			held.search.Path,
+			func() { held.topic = transcript.Topic{} },
+			held.absorb,
+		) {
 		held.search.Path = ""
 	}
 
@@ -114,14 +93,7 @@ func (r *Reader) Retain(sessionIDs []string) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	kept := make(map[string]*rollout, len(sessionIDs))
-	for _, id := range sessionIDs {
-		if held, known := r.sessions[id]; known {
-			kept[id] = held
-		}
-	}
-
-	r.sessions = kept
+	r.sessions = transcript.Retain(r.sessions, sessionIDs)
 }
 
 // layout is where Codex files a rollout: under the day the session started,
@@ -191,15 +163,7 @@ func (s *rollout) absorb(line string) {
 		}
 	case "event_msg":
 		if s.topic.Opening == "" && read.Payload.Type == "user_message" {
-			s.topic.Opening = opening(read.Payload.Message)
+			s.topic.Opening = transcript.FirstLine(read.Payload.Message)
 		}
 	}
-}
-
-// opening reduces a user's first prompt to what can name a session: its first
-// line.
-func opening(text string) string {
-	line, _, _ := strings.Cut(strings.TrimSpace(text), "\n")
-
-	return transcript.Truncate(strings.TrimSpace(line), maxOpening)
 }

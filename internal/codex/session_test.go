@@ -269,7 +269,7 @@ func TestAnotherSessionsRolloutIsNotRead(t *testing.T) {
 		meta(started), prompt("fix the login form"),
 	)
 
-	if got := NewReader(h.dir).Topic(session); got != (Topic{}) {
+	if got := NewReader(h.dir).Topic(session); got != (transcript.Topic{}) {
 		t.Errorf("topic = %+v, want nothing", got)
 	}
 }
@@ -277,7 +277,7 @@ func TestAnotherSessionsRolloutIsNotRead(t *testing.T) {
 func TestNoHomeAnswersNothing(t *testing.T) {
 	t.Parallel()
 
-	if got := NewReader("").Topic(session); got != (Topic{}) {
+	if got := NewReader("").Topic(session); got != (transcript.Topic{}) {
 		t.Errorf("topic = %+v, want nothing", got)
 	}
 }

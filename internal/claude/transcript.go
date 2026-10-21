@@ -18,10 +18,6 @@ import (
 // transcript this package knows how to read.
 const Agent = "claude"
 
-// maxOpening bounds what an opening prompt contributes. It is generous because
-// the cut that matters is made later, against the width of the tab bar.
-const maxOpening = 200
-
 // Topic is what a session says it is about.
 type Topic struct {
 	// Custom is the name the session was given, at launch or with /rename. It
@@ -118,14 +114,7 @@ func (r *Reader) Retain(sessionIDs []string) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	kept := make(map[string]*followed, len(sessionIDs))
-	for _, id := range sessionIDs {
-		if held, known := r.sessions[id]; known {
-			kept[id] = held
-		}
-	}
-
-	r.sessions = kept
+	r.sessions = transcript.Retain(r.sessions, sessionIDs)
 }
 
 // layout is where Claude Code files a session: under the directory it started
@@ -235,7 +224,7 @@ func opening(content json.RawMessage) string {
 	// A session opened with a slash command is named after the command, which
 	// is what Claude Code's own session list shows for it.
 	if command := commandPattern.FindStringSubmatch(text); command != nil {
-		return transcript.Truncate(withArgs(command[1], text), maxOpening)
+		return transcript.Truncate(withArgs(command[1], text), transcript.MaxOpening)
 	}
 
 	text = strings.TrimSpace(markupPattern.ReplaceAllString(text, " "))
@@ -243,9 +232,7 @@ func opening(content json.RawMessage) string {
 		return ""
 	}
 
-	line, _, _ := strings.Cut(text, "\n")
-
-	return transcript.Truncate(strings.TrimSpace(line), maxOpening)
+	return transcript.FirstLine(text)
 }
 
 // withArgs appends what the command was called with: `/code-review spec.md`
